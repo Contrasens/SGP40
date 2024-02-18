@@ -132,7 +132,9 @@ void setup() {
   // drawing operations and then update the screen all at once by calling
   // display.display(). These examples demonstrate both approaches...
 
-  display_VOC(45);    // Display VOC
+  displayVOC(45);    // Display VOC
+  displayTem(45);
+  
 
   //testscrolltext();    // Draw scrolling text
 
@@ -147,7 +149,9 @@ void setup() {
 
 void loop() {
   
-  display_VOC (sgp.measureVocIndex());
+  displayVOC(sgp.measureVocIndex());
+  displayTem(bmx280.getTemperature());
+  //displayHum(bmx280.getHumidity());
 
   	//wait for the measurement to finish
 	do
@@ -158,8 +162,6 @@ void loop() {
 	//important: measurement data is read from the sensor in function hasValue() only. 
 	//make sure to call get*() functions only after hasValue() has returned true. 
 	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
-	Serial.print("Pressure (64 bit): "); Serial.println(bmx280.getPressure64());
-	Serial.print("Pressure (<64,8>): "); Serial.println(bmx280.getPressureI64());
 	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
 
 	if (bmx280.isBME280())
@@ -172,7 +174,7 @@ void loop() {
 
 
 
-void display_VOC(int32_t voc_index) {
+void displayVOC(int32_t voc_index) {
   display.clearDisplay();
 
   display.setTextSize(2);             // Normal 1:1 pixel scale
@@ -181,8 +183,18 @@ void display_VOC(int32_t voc_index) {
   display.print(F("VOC: ")); 
   display.println(voc_index);
 
-  display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-  display.println(3.141592);
+
+  //display.display();
+  delay(2000);
+}
+
+void displayTem(int32_t tem_index) {
+
+  display.setTextSize(3);             // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setCursor(0,20);             
+  display.print(tem_index);
+  display.println("C");
 
   display.display();
   delay(2000);
