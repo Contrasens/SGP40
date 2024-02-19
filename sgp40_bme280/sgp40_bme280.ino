@@ -1,31 +1,25 @@
 /**************************************************************************
- This is an example for our Monochrome OLEDs based on SSD1306 drivers
-
- Pick one up today in the adafruit shop!
- ------> http://www.adafruit.com/category/63_98
-
- This example is for a 128x32 pixel display using I2C to communicate
- 3 pins are required to interface (two I2C and one reset).
-
- Adafruit invests time and resources providing this open
- source code, please support Adafruit and open-source
- hardware by purchasing products from Adafruit!
-
- Written by Limor Fried/Ladyada for Adafruit Industries,
- with contributions from the open source community.
- BSD license, check license.txt for more information
- All text above, and the splash screen below must be
- included in any redistribution.
+This was written based on example code included with the libraries for:
+- ESP8266 (Lolin D1 mini v4.0.0)
+- 128x64 OLED display
+- SGP40 gas sensor
+- BME280 temperature, pressure, humidity sensor
  **************************************************************************/
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
+
+// https://github.com/adafruit/Adafruit-GFX-Library
 #include <Adafruit_GFX.h>
+
+// https://github.com/adafruit/Adafruit_SSD1306
 #include <Adafruit_SSD1306.h>
 
+// https://github.com/adafruit/Adafruit_SGP40
 #include "Adafruit_SGP40.h"
 Adafruit_SGP40 sgp;
 
+// https://bitbucket.org/christandlg/bmx280mi/src/master/
 #include <BMx280I2C.h>
 #define I2C_ADDRESS 0x76
 //create a BMx280I2C object using the I2C interface with I2C Address 0x76
