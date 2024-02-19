@@ -145,7 +145,7 @@ void loop() {
   
   displayVOC(sgp.measureVocIndex());
   displayTem(bmx280.getTemperature());
-  //displayHum(bmx280.getHumidity());
+  displayHum(bmx280.getHumidity());
 
   	//wait for the measurement to finish
 	do
@@ -174,7 +174,7 @@ void displayVOC(int32_t voc_index) {
   display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.print(F("VOC: ")); 
+  display.print(F("VOC : ")); 
   display.println(voc_index);
 
 
@@ -184,11 +184,25 @@ void displayVOC(int32_t voc_index) {
 
 void displayTem(int32_t tem_index) {
 
-  display.setTextSize(3);             // Normal 1:1 pixel scale
+  display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
-  display.setCursor(0,20);             
+  display.setCursor(0,20);      
+  display.print("Temp: ");       
   display.print(tem_index);
   display.println("C");
+
+  //display.display();
+  delay(2000);
+}
+
+void displayHum(int32_t hum_index) {
+
+  display.setTextSize(2);             // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setCursor(0,40);           
+  display.print("Hum : ");  
+  display.print(hum_index);
+  display.println("%");
 
   display.display();
   delay(2000);
