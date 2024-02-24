@@ -8,6 +8,7 @@ This was written based on example code included with the libraries for:
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
+#include <FastLED.h>
 
 // https://github.com/adafruit/Adafruit-GFX-Library
 #include <Adafruit_GFX.h>
@@ -59,7 +60,28 @@ static const unsigned char PROGMEM logo_bmp[] =
   0b01110000, 0b01110000,
   0b00000000, 0b00110000 };
 
+#define LED_PIN     D2
+#define NUM_LEDS    1
+#define BRIGHTNESS  64
+#define LED_TYPE    WS2812B
+#define COLOR_ORDER GRB
+CRGB leds[NUM_LEDS];
+
+#define UPDATES_PER_SECOND 100
+CRGBPalette16 currentPalette;
+TBlendType    currentBlending;
+
 void setup() {
+  pinMode (LED_PIN, OUTPUT);
+  digitalWrite (LED_PIN, LOW);
+
+  delay( 3000 ); // power-up safety delay
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( UncorrectedColor );
+  FastLED.setBrightness(  BRIGHTNESS );
+    
+  currentPalette = RainbowColors_p;
+  currentBlending = LINEARBLEND;
+
   Serial.begin(9600);
   while (!Serial) { delay(10); } // Wait for serial console to open!
 
@@ -142,16 +164,19 @@ void setup() {
 }
 
 void loop() {
-  
-  displayVOC(sgp.measureVocIndex());
-  displayTem(bmx280.getTemperature());
-  displayHum(bmx280.getHumidity());
 
-  	//wait for the measurement to finish
+  uint8_t brightness = 64;
+  //leds[0] = CRGB::Red;
+  leds[0] = ColorFromPalette(currentPalette, sgp.measureVocIndex(), brightness, currentBlending);
+  //wait for the measurement to finish
 	do
 	{
 		delay(1000);
 	} while (!bmx280.hasValue());
+  
+  displayVOC(sgp.measureVocIndex());
+  displayTem(bmx280.getTemperature());
+  displayHum(bmx280.getHumidity());
 
 	//important: measurement data is read from the sensor in function hasValue() only. 
 	//make sure to call get*() functions only after hasValue() has returned true. 
