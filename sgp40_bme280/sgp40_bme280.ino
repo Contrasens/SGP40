@@ -155,8 +155,8 @@ void loop() {
   int32_t voc = sgp.measureVocIndex(temp, humi); 
 
   uint8_t colour = 0;
-  colour = constrain (colour, 90, 200);
-  colour = map(voc, 90, 200, 0, 255);
+  colour = constrain (voc, 90, 200);
+  colour = map(colour, 90, 200, 0, 255);
 
   palette = CRGBPalette256(CRGB::Green, CRGB::Red);
   leds[0] = ColorFromPalette(palette, colour, BRIGHTNESS, currentBlending);
