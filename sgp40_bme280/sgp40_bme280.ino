@@ -60,27 +60,24 @@ static const unsigned char PROGMEM logo_bmp[] =
   0b01110000, 0b01110000,
   0b00000000, 0b00110000 };
 
-#define LED_PIN     D2
+#define LED_PIN     2
 #define NUM_LEDS    1
 #define BRIGHTNESS  64
-#define LED_TYPE    WS2812B
+#define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
 #define UPDATES_PER_SECOND 100
-CRGBPalette16 currentPalette;
+CRGBPalette256 palette;
 TBlendType    currentBlending;
 
 void setup() {
-  pinMode (LED_PIN, OUTPUT);
   digitalWrite (LED_PIN, LOW);
+  pinMode (LED_PIN, OUTPUT);
 
   delay( 3000 ); // power-up safety delay
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( UncorrectedColor );
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
   FastLED.setBrightness(  BRIGHTNESS );
-    
-  currentPalette = RainbowColors_p;
-  currentBlending = LINEARBLEND;
 
   Serial.begin(9600);
   while (!Serial) { delay(10); } // Wait for serial console to open!
@@ -150,33 +147,30 @@ void setup() {
 
   displayVOC(45);    // Display VOC
   displayTem(45);
-  
-
-  //testscrolltext();    // Draw scrolling text
-
-  //testdrawbitmap();    // Draw a small bitmap image
-
-  // Invert and restore display, pausing in-between
-  //display.invertDisplay(true); delay(1000);
-  //display.invertDisplay(false); delay(1000);
-
-
 }
 
 void loop() {
+  float temp = bmx280.getTemperature();
+  float humi = bmx280.getHumidity();
+  int32_t voc = sgp.measureVocIndex(temp, humi); 
 
-  uint8_t brightness = 64;
-  //leds[0] = CRGB::Red;
-  leds[0] = ColorFromPalette(currentPalette, sgp.measureVocIndex(), brightness, currentBlending);
+  uint8_t colour = 0;
+  colour = constrain (colour, 90, 200);
+  colour = map(voc, 90, 200, 0, 255);
+
+  palette = CRGBPalette256(CRGB::Green, CRGB::Red);
+  leds[0] = ColorFromPalette(palette, colour, BRIGHTNESS, currentBlending);
+
+  FastLED.show();
   //wait for the measurement to finish
 	do
 	{
 		delay(1000);
 	} while (!bmx280.hasValue());
   
-  displayVOC(sgp.measureVocIndex());
-  displayTem(bmx280.getTemperature());
-  displayHum(bmx280.getHumidity());
+  displayVOC(voc);
+  displayTem(temp);
+  displayHum(humi);
 
 	//important: measurement data is read from the sensor in function hasValue() only. 
 	//make sure to call get*() functions only after hasValue() has returned true. 
@@ -269,6 +263,12 @@ void testdrawbitmap(void) {
     logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
   delay(1000);
+}
+
+void fadeall() {
+  for(int i = 0; i < NUM_LEDS; i++) { 
+    leds[i].nscale8(250); 
+  } 
 }
 
 
