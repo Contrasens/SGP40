@@ -8,6 +8,8 @@ This was written based on example code included with the libraries for:
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
+
+// https://github.com/FastLED/FastLED
 #include <FastLED.h>
 
 // https://github.com/adafruit/Adafruit-GFX-Library
@@ -38,8 +40,6 @@ BMx280I2C bmx280(I2C_ADDRESS);
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define NUMFLAKES     10 // Number of snowflakes in the animation example
-
 #define LOGO_HEIGHT   16
 #define LOGO_WIDTH    16
 static const unsigned char PROGMEM logo_bmp[] =
@@ -65,6 +65,14 @@ static const unsigned char PROGMEM logo_bmp[] =
 #define BRIGHTNESS  64
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
+
+// Limits for LED indication
+#define GRN_LIM     90
+#define RED_LIM     200
+#define BREATH_LIM  250
+#define ALARM1_LIM  300
+#define ALARM2_LIM  400
+
 CRGB leds[NUM_LEDS];
 
 #define UPDATES_PER_SECOND 100
@@ -75,7 +83,7 @@ void setup() {
   digitalWrite (LED_PIN, LOW);
   pinMode (LED_PIN, OUTPUT);
 
-  delay( 3000 ); // power-up safety delay
+  delay( 1000 ); // power-up safety delay
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
   FastLED.setBrightness(  BRIGHTNESS );
 
@@ -131,7 +139,7 @@ void setup() {
   // Show initial display buffer contents on the screen --
   // the library initializes this with an Adafruit splash screen.
   display.display();
-  delay(2000); // Pause for 2 seconds
+  delay(1000); // Pause for 1 second
 
   // Clear the buffer
   display.clearDisplay();
@@ -139,7 +147,7 @@ void setup() {
   // Show the display buffer on the screen. You MUST call display() after
   // drawing commands to make them visible on screen!
   display.display();
-  delay(2000);
+  
   // display.display() is NOT necessary after every single drawing command,
   // unless that's what you want...rather, you can batch up a bunch of
   // drawing operations and then update the screen all at once by calling
@@ -155,37 +163,24 @@ void loop() {
   int32_t voc = sgp.measureVocIndex(temp, humi); 
 
   uint8_t colour = 0;
-  colour = constrain (voc, 90, 200);
-  colour = map(colour, 90, 200, 0, 255);
+  colour = constrain (voc, GRN_LIM, RED_LIM);
+  colour = map(colour, GRN_LIM, RED_LIM, 0, 255);
+  led_colour(colour, voc);
 
-  palette = CRGBPalette256(CRGB::Green, CRGB::Red);
-  leds[0] = ColorFromPalette(palette, colour, BRIGHTNESS, currentBlending);
-
-  FastLED.show();
   //wait for the measurement to finish
 	do
 	{
-		delay(1000);
+		delay(200);
 	} while (!bmx280.hasValue());
-  
+
   displayVOC(voc);
   displayTem(temp);
   displayHum(humi);
+  display.display();
 
 	//important: measurement data is read from the sensor in function hasValue() only. 
 	//make sure to call get*() functions only after hasValue() has returned true. 
-	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
-	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
-
-	if (bmx280.isBME280())
-	{
-		Serial.print("Humidity: "); 
-		Serial.println(bmx280.getHumidity());
-	}
-
 }
-
-
 
 void displayVOC(int32_t voc_index) {
   display.clearDisplay();
@@ -195,10 +190,6 @@ void displayVOC(int32_t voc_index) {
   display.setCursor(0,0);             // Start at top-left corner
   display.print(F("VOC : ")); 
   display.println(voc_index);
-
-
-  //display.display();
-  delay(2000);
 }
 
 void displayTem(int32_t tem_index) {
@@ -209,9 +200,6 @@ void displayTem(int32_t tem_index) {
   display.print("Temp: ");       
   display.print(tem_index);
   display.println("C");
-
-  //display.display();
-  delay(2000);
 }
 
 void displayHum(int32_t hum_index) {
@@ -222,53 +210,42 @@ void displayHum(int32_t hum_index) {
   display.print("Hum : ");  
   display.print(hum_index);
   display.println("%");
-
-  display.display();
-  delay(2000);
 }
 
-void testscrolltext(void) {
-  display.clearDisplay();
-
-  display.setTextSize(2); // Draw 2X-scale text
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(10, 0);
-  display.println(F("scroll"));
-  display.display();      // Show initial text
-  delay(100);
-
-  // Scroll in various directions, pausing in-between:
-  display.startscrollright(0x00, 0x0F);
-  delay(2000);
-  display.stopscroll();
-  delay(1000);
-  display.startscrollleft(0x00, 0x0F);
-  delay(2000);
-  display.stopscroll();
-  delay(1000);
-  display.startscrolldiagright(0x00, 0x07);
-  delay(2000);
-  display.startscrolldiagleft(0x00, 0x07);
-  delay(2000);
-  display.stopscroll();
-  delay(1000);
+void led_colour(uint8_t colour, int32_t voc){
+  if  (voc <= GRN_LIM) breathe(CRGB::Blue);
+  if ((voc > GRN_LIM) && (voc <= RED_LIM)) colour_voc(voc, colour);
+  if ((voc >RED_LIM) && (voc <= BREATH_LIM)) breathe(CRGB::Red);
+  if ((voc >BREATH_LIM) && (voc <= ALARM1_LIM)) alert_1(CRGB::Red);
+  if  (voc >ALARM2_LIM) alert_2(CRGB::Red);
 }
 
-void testdrawbitmap(void) {
-  display.clearDisplay();
+void colour_voc(int32_t voc, uint8_t col){
 
-  display.drawBitmap(
-    (display.width()  - LOGO_WIDTH ) / 2,
-    (display.height() - LOGO_HEIGHT) / 2,
-    logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-  display.display();
-  delay(1000);
+  palette = CRGBPalette256(CRGB::Green, CRGB::Red);
+  leds[0] = ColorFromPalette(palette, col, BRIGHTNESS, currentBlending);
+  FastLED.show();
 }
 
-void fadeall() {
-  for(int i = 0; i < NUM_LEDS; i++) { 
-    leds[i].nscale8(250); 
-  } 
+void breathe(CRGB colour){
+  CRGBPalette16 palette = CRGBPalette16(CRGB::Black, colour, CRGB::Black);
+  leds[0] = CRGB::Black; FastLED.show();
+  for (int i = 0; i <= 255; i++) {
+    leds[0] = ColorFromPalette(palette, i, BRIGHTNESS, currentBlending);
+    FastLED.show();
+  }
 }
 
+void alert_1(CRGB colour){
+  leds[0] = colour;       FastLED.show(); delay (2000);
+  leds[0] = CRGB::White;  FastLED.show();  delay (5);
+}
+
+void alert_2(CRGB colour){
+  leds[0] = colour;       FastLED.show(); delay (2000);
+  leds[0] = CRGB::White;  FastLED.show(); delay (10);
+  leds[0] = CRGB::Black;  FastLED.show(); delay (100);
+  leds[0] = CRGB::White;  FastLED.show(); delay (10);
+  leds[0] = CRGB::Black;  FastLED.show(); delay (10);
+}
 
