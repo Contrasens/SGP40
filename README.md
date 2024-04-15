@@ -1,4 +1,4 @@
-# Arduino Project with SGP40 and BME280 Sensors
+# VOC (Volatile Organic Compounds) index with ESP8266, SGP40 and BME280 Sensors
 
 This project is built for an ESP8266 (Lolin D1 mini v4.0.0) with a 128x64 OLED display, SGP40 gas sensor, and BME280 temperature, pressure, humidity sensor.
 
@@ -20,6 +20,13 @@ This Arduino project is designed to read data from SGP40 gas sensor and BME280 t
 2. Open Arduino IDE and go to Sketch > Include Library > Manage Libraries.
 3. Search for and install the libraries mentioned above.
 4. Download this project and open the .ino file in Arduino IDE.
+
+## BOM
+I used the following hardware parts (I have no associations with any of the vendors!):
+1. [D1 MINI V4.0.0](https://de.aliexpress.com/item/1005001621784437.html)
+2. [SGP40](https://de.aliexpress.com/item/4000037083952.html)
+3. [BME280-5V](https://de.aliexpress.com/item/1005003688067858.html) - make sure you buy the 5V version
+4. [OLED Display Modul 128X64 I2C](https://de.aliexpress.com/item/32896971385.html) - I took the white I2C version
 
 ## Usage
 
