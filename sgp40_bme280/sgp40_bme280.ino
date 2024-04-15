@@ -79,6 +79,22 @@ CRGB leds[NUM_LEDS];
 CRGBPalette256 palette;
 TBlendType    currentBlending;
 
+/**
+ * @brief Initializes the necessary components and sets up the initial state of the program.
+ * 
+ * This function is called once when the program starts. It performs the following tasks:
+ * - Initializes the LED pin and sets it to LOW.
+ * - Adds LEDs to the FastLED library and sets the brightness.
+ * - Initializes the serial communication.
+ * - Checks if the SGP40 sensor is connected and prints its serial number.
+ * - Checks if the BMx280 sensor is connected and prints its type.
+ * - Resets the BMx280 sensor to default parameters.
+ * - Sets oversampling settings for pressure, temperature, and humidity measurements.
+ * - Sets the sensor to normal mode with 4 measurements per second.
+ * - Initializes the SSD1306 display and shows an initial splash screen.
+ * - Clears the display buffer.
+ * - Displays the VOC and temperature on the screen.
+ */
 void setup() {
   digitalWrite (LED_PIN, LOW);
   pinMode (LED_PIN, OUTPUT);
@@ -157,6 +173,19 @@ void setup() {
   displayTem(45);
 }
 
+/**
+ * @brief The main loop of the program.
+ * 
+ * This function is called repeatedly in the program. It performs the following tasks:
+ * 1. Retrieves the temperature, humidity, and VOC (Volatile Organic Compounds) index from the sensors.
+ * 2. Calculates the LED color based on the VOC index.
+ * 3. Displays the VOC index, temperature, and humidity on a display.
+ * 4. Updates the display.
+ * 5. Waits for the measurement to finish before proceeding to the next iteration.
+ * 
+ * @note The measurement data is read from the sensor in the `hasValue()` function. 
+ * Make sure to call the `get*()` functions only after `hasValue()` has returned true.
+ */
 void loop() {
   float temp = bmx280.getTemperature();
   float humi = bmx280.getHumidity();
@@ -177,11 +206,16 @@ void loop() {
   displayTem(temp);
   displayHum(humi);
   display.display();
-
-	//important: measurement data is read from the sensor in function hasValue() only. 
-	//make sure to call get*() functions only after hasValue() has returned true. 
 }
 
+/**
+ * @brief Displays the VOC (Volatile Organic Compounds) index on the display.
+ * 
+ * This function clears the display and prints the VOC index on the screen.
+ * The VOC index is passed as a parameter to the function.
+ * 
+ * @param voc_index The VOC index to be displayed.
+ */
 void displayVOC(int32_t voc_index) {
   display.clearDisplay();
 
@@ -192,6 +226,14 @@ void displayVOC(int32_t voc_index) {
   display.println(voc_index);
 }
 
+/**
+ * @brief Displays the temperature on the OLED display.
+ * 
+ * This function sets the text size, color, and cursor position on the display.
+ * It then prints the temperature value followed by the unit "C" to indicate Celsius.
+ * 
+ * @param tem_index The temperature value to be displayed.
+ */
 void displayTem(int32_t tem_index) {
 
   display.setTextSize(2);             // Normal 1:1 pixel scale
@@ -202,6 +244,11 @@ void displayTem(int32_t tem_index) {
   display.println("C");
 }
 
+/**
+ * Displays the humidity index on the OLED display.
+ * 
+ * @param hum_index The humidity index to be displayed.
+ */
 void displayHum(int32_t hum_index) {
 
   display.setTextSize(2);             // Normal 1:1 pixel scale
@@ -212,6 +259,12 @@ void displayHum(int32_t hum_index) {
   display.println("%");
 }
 
+/**
+ * Sets the LED color based on the VOC (Volatile Organic Compounds) value.
+ * 
+ * @param colour The desired color of the LED.
+ * @param voc The VOC value to determine the LED color.
+ */
 void led_colour(uint8_t colour, int32_t voc){
   if  (voc <= GRN_LIM) breathe(CRGB::Blue);
   if ((voc > GRN_LIM) && (voc <= RED_LIM)) colour_voc(voc, colour);
@@ -220,6 +273,12 @@ void led_colour(uint8_t colour, int32_t voc){
   if  (voc >ALARM2_LIM) alert_2(CRGB::Red);
 }
 
+/**
+ * Sets the color of the first LED based on the VOC (Volatile Organic Compounds) value.
+ * 
+ * @param voc The VOC value to determine the color.
+ * @param col The color index to use from the color palette.
+ */
 void colour_voc(int32_t voc, uint8_t col){
 
   palette = CRGBPalette256(CRGB::Green, CRGB::Red);
@@ -227,6 +286,11 @@ void colour_voc(int32_t voc, uint8_t col){
   FastLED.show();
 }
 
+/**
+ * Breathe function that creates a breathing effect with a specified color.
+ * 
+ * @param colour The color to use for the breathing effect.
+ */
 void breathe(CRGB colour){
   CRGBPalette16 palette = CRGBPalette16(CRGB::Black, colour, CRGB::Black);
   leds[0] = CRGB::Black; FastLED.show();
@@ -236,11 +300,25 @@ void breathe(CRGB colour){
   }
 }
 
+/**
+ * Sets the color of the first LED in the `leds` array to the specified `colour`,
+ * displays the updated LED color using FastLED, and then waits for 2 seconds.
+ * After that, sets the color of the first LED to white, displays the updated LED color,
+ * and waits for 5 milliseconds.
+ *
+ * @param colour The color to set the first LED to.
+ */
 void alert_1(CRGB colour){
   leds[0] = colour;       FastLED.show(); delay (2000);
   leds[0] = CRGB::White;  FastLED.show();  delay (5);
 }
 
+/**
+ * Displays an alert using the specified color on the first LED in the `leds` array.
+ * The alert consists of a sequence of color changes and delays.
+ *
+ * @param colour The color to display for the alert.
+ */
 void alert_2(CRGB colour){
   leds[0] = colour;       FastLED.show(); delay (2000);
   leds[0] = CRGB::White;  FastLED.show(); delay (10);
